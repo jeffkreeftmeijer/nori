@@ -12,6 +12,7 @@ begin
     gem.authors = ["Jeff Kreeftmeijer"]
     gem.add_development_dependency "rspec", ">= 1.2.9"
     gem.add_development_dependency "yard", ">= 0"
+    gem.add_dependency "httparty", ">= 0.5.2"
   end
   Jeweler::GemcutterTasks.new
 rescue LoadError
