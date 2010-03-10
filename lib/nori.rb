@@ -43,6 +43,16 @@ module Nori
     end
 
     def self.method_missing(method, *args)
+      options = args.last.is_a?(Hash) ? args.pop : {}
+
+      if method.to_s.match(/^find_all_by_([_a-zA-Z]\w*)$/)
+        attributes = {}
+        $1.split('_and_').each do |key|
+          attributes.merge!({key.to_sym => args.shift})
+        end
+        return all(attributes.merge(options))
+      end
+
       action_parameter(*args, method)
     end
   end
