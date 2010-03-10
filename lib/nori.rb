@@ -1,10 +1,27 @@
 require 'httparty'
 
 module Nori
+
+  class ActionNotSpecified < StandardError; end
+
   class Resource
     def self.action(name, attributes)
       @actions ||= {}
       @actions.merge!({name => attributes})
+    end
+
+    def self.find(*args)
+      raise(ActionNotSpecified) unless @actions[:index]
+      options = args.last.is_a?(Hash) ? args.pop : {}
+      all(options)
+    end
+
+    def self.all(args = {})
+      Request.perform(
+        @actions[:index][:url],
+        args,
+        @actions[:index][:method] || :get
+      )
     end
   end
 

@@ -3,7 +3,7 @@ require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 describe 'Nori::Resource' do
   describe '.action' do
     before(:each) do
-      Nori::Resource.action :find, :url => 'http://example.com'
+      Nori::Resource.action :index, :url => 'http://example.com'
       @actions = Nori::Resource.instance_variable_get(:@actions)
     end
 
@@ -12,11 +12,70 @@ describe 'Nori::Resource' do
     end
 
     it 'should set the new action name as a key' do
-      @actions.keys.should == [:find]
+      @actions.keys.should == [:index]
     end
 
     it 'should add any other arguments as the actions attributes' do
-      @actions[:find].should == {:url => 'http://example.com'}
+      @actions[:index].should == {:url => 'http://example.com'}
+    end
+  end
+
+  describe '.find' do
+    it 'should raise an error if there is no :index action' do
+      Nori::Resource.instance_variable_set(:@actions, {})
+      lambda {
+        Nori::Resource.find
+      }.should raise_error(Nori::ActionNotSpecified)
+    end
+
+    it 'should call .all and pass its arguments' do
+      @actions = Nori::Resource.instance_variable_set(
+        :@actions,
+        {:index => {}}
+      )
+      Nori::Resource.should_receive(:all).with(:q => 'Chunky Bacon!')
+      Nori::Resource.find(:all, :q => 'Chunky Bacon!')
+    end
+  end
+
+  describe '.all' do
+    it 'should call Nori::Request.perform to the :index url' do
+      @actions = Nori::Resource.instance_variable_set(
+        :@actions,
+        {:index => {:url => 'http://google.com/search'}}
+      )
+
+      Nori::Request.should_receive(:perform).with(
+        'http://google.com/search',
+        {},
+        :get
+      )
+
+      Nori::Resource.all
+    end
+
+    it 'should call Nori::Request.perform to the :index url and the arguments' do
+      Nori::Request.should_receive(:perform).with(
+        'http://google.com/search',
+        {:q => 'Chunky Bacon!'},
+        :get
+      )
+
+      Nori::Resource.all(:q => 'Chunky Bacon!')
+    end
+
+    it 'should call Nori::Request.perform with the :post method' do
+      @actions = Nori::Resource.instance_variable_set(
+        :@actions,
+        {:index => {:url => 'http://google.com/search', :method => :post}}
+      )
+
+      Nori::Request.should_receive(:perform).with(
+        'http://google.com/search',
+        {},
+        :post
+      )
+      Nori::Resource.all
     end
   end
 end
@@ -34,7 +93,10 @@ describe 'Nori::Request' do
     end
 
     it 'should pass the supplied arguments in the request' do
-      HTTParty.should_receive(:get).with('http://google.com/search', :query => {:q => 'Chunky Bacon!'})
+      HTTParty.should_receive(:get).with(
+        'http://google.com/search',
+        :query => {:q => 'Chunky Bacon!'}
+      )
       Nori::Request.perform('http://google.com/search', :q => 'Chunky Bacon!')
     end
   end
