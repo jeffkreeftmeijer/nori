@@ -47,7 +47,7 @@ describe 'Nori::Resource' do
 
   describe '.all' do
     before(:each) do
-      Nori::Request.stub!(:perform).and_return({:resource => [1,2,3]})
+      Nori::Request.stub!(:perform).and_return({'resource' => [1,2,3]})
     end
 
     it 'should call Nori::Request.perform to the :index url' do
@@ -60,7 +60,7 @@ describe 'Nori::Resource' do
         'http://google.com/search',
         {},
         :get
-      ).and_return(:resource => {})
+      ).and_return('resource' => {})
 
       Nori::Resource.all
     end
@@ -70,7 +70,7 @@ describe 'Nori::Resource' do
         'http://google.com/search',
         {:q => 'Chunky Bacon!'},
         :get
-      ).and_return(:resource => {})
+      ).and_return('resource' => {})
 
       Nori::Resource.all(:q => 'Chunky Bacon!')
     end
@@ -85,7 +85,7 @@ describe 'Nori::Resource' do
         'http://google.com/search',
         {},
         :post
-      ).and_return(:resource => {})
+      ).and_return('resource' => {})
       Nori::Resource.all
     end
 

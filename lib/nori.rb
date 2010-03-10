@@ -27,7 +27,7 @@ module Nori
         @actions[:index][:method] || :get
       )
 
-      response[:resource].map{|item| new(item) }
+      response[name.split('::').last.downcase].map{|item| new(item) }
     end
   end
 
