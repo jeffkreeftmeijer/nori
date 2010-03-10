@@ -1,8 +1,15 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 
 describe 'Nori::Resource' do
+  describe '.initialize' do
+    it 'should store the supplied arguments into the attributes variable' do
+      item = Nori::Resource.new({:name => 'Nori'})
+      item.instance_variable_get(:@attributes)[:name].should == 'Nori'
+    end
+  end
+
   describe '.action' do
-    before(:each) do
+    before(:all) do
       Nori::Resource.action :index, :url => 'http://example.com'
       @actions = Nori::Resource.instance_variable_get(:@actions)
     end
@@ -39,6 +46,10 @@ describe 'Nori::Resource' do
   end
 
   describe '.all' do
+    before(:each) do
+      Nori::Request.stub!(:perform).and_return({:resource => [1,2,3]})
+    end
+
     it 'should call Nori::Request.perform to the :index url' do
       @actions = Nori::Resource.instance_variable_set(
         :@actions,
@@ -49,7 +60,7 @@ describe 'Nori::Resource' do
         'http://google.com/search',
         {},
         :get
-      )
+      ).and_return(:resource => {})
 
       Nori::Resource.all
     end
@@ -59,7 +70,7 @@ describe 'Nori::Resource' do
         'http://google.com/search',
         {:q => 'Chunky Bacon!'},
         :get
-      )
+      ).and_return(:resource => {})
 
       Nori::Resource.all(:q => 'Chunky Bacon!')
     end
@@ -74,8 +85,22 @@ describe 'Nori::Resource' do
         'http://google.com/search',
         {},
         :post
-      )
+      ).and_return(:resource => {})
       Nori::Resource.all
+    end
+
+    it 'should send every item in the parent_node to #new' do
+      [1,2,3].each do |item|
+        Nori::Resource.should_receive(:new).with(item)
+      end
+      Nori::Resource.all
+    end
+
+    it 'should return three Resource objects' do
+      objects = Nori::Resource.all
+      objects.each do |object|
+        object.should be_instance_of Nori::Resource
+      end
     end
   end
 end

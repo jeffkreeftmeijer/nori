@@ -5,6 +5,10 @@ module Nori
   class ActionNotSpecified < StandardError; end
 
   class Resource
+    def initialize(attributes)
+      @attributes = attributes
+    end
+
     def self.action(name, attributes)
       @actions ||= {}
       @actions.merge!({name => attributes})
@@ -17,11 +21,13 @@ module Nori
     end
 
     def self.all(args = {})
-      Request.perform(
+      response = Request.perform(
         @actions[:index][:url],
         args,
         @actions[:index][:method] || :get
       )
+
+      response[:resource].map{|item| new(item) }
     end
   end
 
