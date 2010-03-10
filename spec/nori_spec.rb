@@ -1,10 +1,26 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 
 describe 'Nori::Resource' do
-  describe '.initialize' do
+  describe '#initialize' do
     it 'should store the supplied arguments into the attributes variable' do
       item = Nori::Resource.new({:name => 'Nori'})
       item.instance_variable_get(:@attributes)[:name].should == 'Nori'
+    end
+  end
+
+  describe '#method_missing' do
+    before(:all) do
+      @item = Nori::Resource.new({'name' => 'Nori'})
+    end
+
+    it 'should return the name when calling it as a method' do
+      @item.name.should == 'Nori'
+    end
+
+    it 'should raise a NoMethodError when the attribute is not available' do
+      lambda {
+        @item.description
+      }.should raise_error(NoMethodError)
     end
   end
 
@@ -75,10 +91,10 @@ describe 'Nori::Resource' do
       Nori::Resource.all(:q => 'Chunky Bacon!')
     end
 
-    it 'should call Nori::Request.perform with the :post method' do
+    it 'should call Nori::Request.perform with the :post http_method' do
       @actions = Nori::Resource.instance_variable_set(
         :@actions,
-        {:index => {:url => 'http://google.com/search', :method => :post}}
+        {:index => {:url => 'http://google.com/search', :http_method => :post}}
       )
 
       Nori::Request.should_receive(:perform).with(
@@ -101,6 +117,88 @@ describe 'Nori::Resource' do
       objects.each do |object|
         object.should be_instance_of Nori::Resource
       end
+    end
+
+    it 'should use the :parent_node when provided' do
+      Nori::Request.stub!(:perform).and_return({'node' => [1,2,3]})
+
+      @actions = Nori::Resource.instance_variable_set(
+        :@actions,
+        {:index => {:url => 'http://google.com/search', :parent_node => 'node'}}
+      )
+
+      [1,2,3].each do |item|
+        Nori::Resource.should_receive(:new).with(item)
+      end
+
+      Nori::Resource.all
+    end
+  end
+
+  describe '.parent_node' do
+    it 'should return the request class name when no parent_node is specified' do
+      @actions = Nori::Resource.instance_variable_set(
+        :@actions,
+        {:index => {:parent_node => nil}}
+      )
+
+      Nori::Resource.parent_node(:index).should == 'resource'
+    end
+
+    it 'should return the parent_node when specified' do
+      @actions = Nori::Resource.instance_variable_set(
+        :@actions,
+        {:index => {:parent_node => 'node'}}
+      )
+
+      Nori::Resource.parent_node(:index).should == 'node'
+    end
+  end
+
+  describe '.http_method' do
+    it 'should return :get as the default' do
+      @actions = Nori::Resource.instance_variable_set(
+        :@actions,
+        {:index => {:http_method => nil}}
+      )
+
+      Nori::Resource.http_method(:index).should == :get
+    end
+
+    it 'should return the parent_node when specified' do
+      @actions = Nori::Resource.instance_variable_set(
+        :@actions,
+        {:index => {:http_method => :post}}
+      )
+
+      Nori::Resource.http_method(:index).should == :post
+    end
+  end
+
+  describe '.action_parameter' do
+    it 'should return the :url for :index' do
+      Nori::Resource.instance_variable_set(
+        :@actions,
+        {:index => {:url => 'http://google.com/search', :parent_node => 'node'}}
+      )
+
+      Nori::Resource.action_parameter(:index, :url).should == 'http://google.com/search'
+    end
+
+    it 'should return the :parent_node for :show' do
+      Nori::Resource.instance_variable_set(
+        :@actions,
+        {:show => {:url => 'http://google.com/search', :parent_node => 'node'}}
+      )
+
+      Nori::Resource.action_parameter(:show, :parent_node).should == 'node'
+    end
+  end
+
+  describe '.method_missing' do
+    it 'should call to .action_parameter and pass the action and the parameter' do
+      Nori::Resource.should_receive(:action_parameter).with(:index, :url)
+      Nori::Resource.url(:index)
     end
   end
 end

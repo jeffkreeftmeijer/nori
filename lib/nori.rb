@@ -9,6 +9,11 @@ module Nori
       @attributes = attributes
     end
 
+    def method_missing(method)
+      return @attributes[method.to_s] if @attributes[method.to_s]
+      super
+    end
+
     def self.action(name, attributes)
       @actions ||= {}
       @actions.merge!({name => attributes})
@@ -21,19 +26,30 @@ module Nori
     end
 
     def self.all(args = {})
-      response = Request.perform(
-        @actions[:index][:url],
-        args,
-        @actions[:index][:method] || :get
-      )
+      response = Request.perform(url(:index), args, http_method(:index))
+      response[parent_node(:index)].map{|item| new(item) }
+    end
 
-      response[name.split('::').last.downcase].map{|item| new(item) }
+    def self.parent_node(action)
+      super || name.split('::').last.downcase
+    end
+
+    def self.http_method(action)
+      super || :get
+    end
+
+    def self.action_parameter(action, parameter)
+      @actions[action][parameter]
+    end
+
+    def self.method_missing(method, *args)
+      action_parameter(*args, method)
     end
   end
 
   class Request
-    def self.perform(url, args = {}, method = :get)
-      HTTParty.send(method, url, :query => args)
+    def self.perform(url, args = {}, http_method = :get)
+      HTTParty.send(http_method, url, :query => args)
     end
   end
 end
