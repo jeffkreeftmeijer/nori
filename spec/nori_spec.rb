@@ -175,14 +175,14 @@ describe 'Nori::Resource' do
     end
   end
 
-  describe '.action_parameter' do
+  describe '.parameter_action' do
     it 'should return the :url for :index' do
       Nori::Resource.instance_variable_set(
         :@actions,
         {:index => {:url => 'http://google.com/search', :parent_node => 'node'}}
       )
 
-      Nori::Resource.action_parameter(:index, :url).should == 'http://google.com/search'
+      Nori::Resource.parameter_action(:url, :index).should == 'http://google.com/search'
     end
 
     it 'should return the :parent_node for :show' do
@@ -191,13 +191,13 @@ describe 'Nori::Resource' do
         {:show => {:url => 'http://google.com/search', :parent_node => 'node'}}
       )
 
-      Nori::Resource.action_parameter(:show, :parent_node).should == 'node'
+      Nori::Resource.parameter_action(:parent_node, :show).should == 'node'
     end
   end
 
   describe '.method_missing' do
-    it 'should call to .action_parameter and pass the action and the parameter' do
-      Nori::Resource.should_receive(:action_parameter).with(:index, :url)
+    it 'should call to .parameter_action and pass the action and the parameter' do
+      Nori::Resource.should_receive(:parameter_action).with(:url, :index)
       Nori::Resource.url(:index)
     end
 

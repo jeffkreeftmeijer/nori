@@ -38,7 +38,7 @@ module Nori
       super || :get
     end
 
-    def self.action_parameter(action, parameter)
+    def self.parameter_action(parameter, action)
       @actions[action][parameter]
     end
 
@@ -53,7 +53,7 @@ module Nori
         return all(attributes.merge(options))
       end
 
-      action_parameter(*args, method)
+      parameter_action(method, *args)
     end
   end
 
