@@ -16,7 +16,13 @@ module Nori
 
     def self.find(*args)
       options = args.last.is_a?(Hash) ? args.pop : {}
-      all(options)
+      args.first == :all ? all(options) : find_with_id(args.first, options)
+    end
+
+    def self.find_with_id(id, args = {})
+      raise(ActionNotSpecified) unless @actions[:show]
+      response = Request.perform(url(:show), args.merge(:id => id), http_method(:show))
+      new response[parent_node(:show)]
     end
 
     def self.all(args = {})
