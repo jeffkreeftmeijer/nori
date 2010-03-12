@@ -22,12 +22,14 @@ module Nori
     def self.find_with_id(id, args = {})
       raise(ActionNotSpecified) unless @actions[:show]
       response = Request.perform(url(:show), args.merge(:id => id), http_method(:show))
+      raise(ParentNodeNotFound, "Couldn't find `#{parent_node(:show)}` in #{response.to_yaml}") unless response[parent_node(:show)]
       new response[parent_node(:show)]
     end
 
     def self.all(args = {})
       raise(ActionNotSpecified) unless @actions[:index]
       response = Request.perform(url(:index), args, http_method(:index))
+      raise(ParentNodeNotFound, "Couldn't find `#{parent_node(:index)}` in #{response.to_yaml}") unless response[parent_node(:index)]
       response[parent_node(:index)].map{|item| new(item) }
     end
 

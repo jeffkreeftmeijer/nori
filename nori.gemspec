@@ -26,11 +26,11 @@ Gem::Specification.new do |s|
      "lib/nori.rb",
      "lib/nori/request.rb",
      "lib/nori/resource.rb",
+     "nori.gemspec",
      "spec/nori/request_spec.rb",
      "spec/nori/resource_spec.rb",
      "spec/spec.opts",
-     "spec/spec_helper.rb",
-     "test.rb"
+     "spec/spec_helper.rb"
   ]
   s.homepage = %q{http://github.com/jeffkreeftmeijer/nori}
   s.rdoc_options = ["--charset=UTF-8"]

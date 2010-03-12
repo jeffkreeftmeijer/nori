@@ -89,7 +89,7 @@ describe 'Nori::Resource' do
         :get
       ).and_return('resource' => {})
 
-      Nori::Resource.find(1, :q => 'Chunky Bacon!')
+      Nori::Resource.find_with_id(1, :q => 'Chunky Bacon!')
     end
 
     it 'should call Nori::Request.perform with the :post http_method' do
@@ -103,12 +103,12 @@ describe 'Nori::Resource' do
         {:id => 1},
         :post
       ).and_return('resource' => {})
-      Nori::Resource.find(1)
+      Nori::Resource.find_with_id(1)
     end
 
     it 'should send the item in the parent_node to #new' do
       Nori::Resource.should_receive(:new).with(1)
-      Nori::Resource.find(1)
+      Nori::Resource.find_with_id(1)
     end
 
     it 'should return a Resource object' do
@@ -125,13 +125,21 @@ describe 'Nori::Resource' do
       )
 
       Nori::Resource.should_receive(:new).with(1)
-      Nori::Resource.find(1)
+      Nori::Resource.find_with_id(1)
+    end
+
+    it 'should raise an error when the :parent_node could not be found' do
+      response = {'othernode' => 1}
+      Nori::Request.stub!(:perform).and_return(response)
+      lambda {
+        Nori::Resource.find_with_id(1)
+      }.should raise_error(Nori::ParentNodeNotFound, "Couldn't find `node` in #{response.to_yaml}")
     end
 
     it 'should raise an error if there is no :show action' do
       Nori::Resource.instance_variable_set(:@actions, {})
       lambda {
-        Nori::Resource.find(1)
+        Nori::Resource.find_with_id(1)
       }.should raise_error(Nori::ActionNotSpecified)
     end
   end
@@ -207,6 +215,14 @@ describe 'Nori::Resource' do
       end
 
       Nori::Resource.all
+    end
+
+    it 'should raise an error when the :parent_node could not be found' do
+      response = {'othernode' => 1}
+      Nori::Request.stub!(:perform).and_return(response)
+      lambda {
+        Nori::Resource.all
+      }.should raise_error(Nori::ParentNodeNotFound, "Couldn't find `node` in #{response.to_yaml}")
     end
 
     it 'should raise an error if there is no :index action' do
