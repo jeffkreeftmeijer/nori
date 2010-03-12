@@ -19,5 +19,21 @@ describe 'Nori::Request' do
       )
       Nori::Request.perform('http://google.com/search', :q => 'Chunky Bacon!')
     end
+
+    it 'should replace the url tag with the param provided' do
+      HTTParty.should_receive(:get).with(
+        'http://google.com/search', :query => {}
+      )
+
+      Nori::Request.perform('http://{name}.com/search', {:name => 'google'})
+    end
+
+    it 'should replace multiple url tags with the params provided' do
+      HTTParty.should_receive(:get).with(
+        'http://google.com/search', :query => {}
+      )
+
+      Nori::Request.perform('http://{name}.com/{page}', {:name => 'google', :page => 'search'})
+    end
   end
 end
