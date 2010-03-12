@@ -44,13 +44,6 @@ describe 'Nori::Resource' do
   end
 
   describe '.find' do
-    it 'should raise an error if there is no :index action' do
-      Nori::Resource.instance_variable_set(:@actions, {})
-      lambda {
-        Nori::Resource.find
-      }.should raise_error(Nori::ActionNotSpecified)
-    end
-
     it 'should call .all and pass its arguments' do
       @actions = Nori::Resource.instance_variable_set(
         :@actions,
@@ -132,6 +125,13 @@ describe 'Nori::Resource' do
       end
 
       Nori::Resource.all
+    end
+
+    it 'should raise an error if there is no :index action' do
+      Nori::Resource.instance_variable_set(:@actions, {})
+      lambda {
+        Nori::Resource.all
+      }.should raise_error(Nori::ActionNotSpecified)
     end
   end
 

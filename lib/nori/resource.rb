@@ -15,12 +15,12 @@ module Nori
     end
 
     def self.find(*args)
-      raise(ActionNotSpecified) unless @actions[:index]
       options = args.last.is_a?(Hash) ? args.pop : {}
       all(options)
     end
 
     def self.all(args = {})
+      raise(ActionNotSpecified) unless @actions[:index]
       response = Request.perform(url(:index), args, http_method(:index))
       response[parent_node(:index)].map{|item| new(item) }
     end
