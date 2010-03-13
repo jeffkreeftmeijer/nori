@@ -309,5 +309,20 @@ describe 'Nori::Resource' do
       Nori::Resource.should_receive(:find).with(:all, :name => 'nori', :language => 'ruby', :order => 'desc')
       Nori::Resource.find_all_by_name_and_language('nori', 'ruby', :order => 'desc')
     end
+    
+    it 'should call .find and a magic condition' do
+      Nori::Resource.should_receive(:find).with(:name => 'nori')
+      Nori::Resource.find_by_name('nori')
+    end
+
+    it 'should call .find and multiple magic conditions' do
+      Nori::Resource.should_receive(:find).with(:name => 'nori', :language => 'ruby')
+      Nori::Resource.find_by_name_and_language('nori', 'ruby')
+    end
+    
+    it 'should call .find and multiple magic conditions and extra conditions' do
+      Nori::Resource.should_receive(:find).with(:name => 'nori', :language => 'ruby', :order => 'desc')
+      Nori::Resource.find_by_name_and_language('nori', 'ruby', :order => 'desc')
+    end
   end
 end
