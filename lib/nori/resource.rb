@@ -16,17 +16,19 @@ module Nori
 
     def self.find(*args)
       options = args.last.is_a?(Hash) ? args.pop : {}
-      if args.first == :all
-        raise(ActionNotSpecified) unless @actions[:index]
-        response = Request.perform(url(:index), options, http_method(:index))
-        raise(ParentNodeNotFound, "Couldn't find `#{parent_node(:index)}` in #{response.to_yaml}") unless response[parent_node(:index)]
+      action = args.first == :all ? :index : :show
+
+      raise(ActionNotSpecified) unless @actions[action]
+
+      response = Request.perform(url(action), options, http_method(action))
+      
+      raise(ParentNodeNotFound, "Couldn't find `#{parent_node(action)}` in #{response.to_yaml}") unless response[parent_node(action)]
+      
+      if action == :index
         response[parent_node(:index)].map{|item| new(item) }
       else
-        raise(ActionNotSpecified) unless @actions[:show]
-        response = Request.perform(url(:show), options, http_method(:show))
-        raise(ParentNodeNotFound, "Couldn't find `#{parent_node(:show)}` in #{response.to_yaml}") unless response[parent_node(:show)]
         new response[parent_node(:show)]
-      end
+      end      
     end
 
     def self.all(args = {})
@@ -53,7 +55,7 @@ module Nori
         $1.split('_and_').each do |key|
           attributes.merge!({key.to_sym => args.shift})
         end
-        return all(attributes.merge(options))
+        return find(:all, attributes.merge(options))
       end
 
       parameter_action(method, *args)

@@ -295,18 +295,18 @@ describe 'Nori::Resource' do
       Nori::Resource.url(:index)
     end
 
-    it 'should call .all with a magic condition' do
-      Nori::Resource.should_receive(:all).with(:name => 'nori')
+    it 'should call .find with :all and a magic condition' do
+      Nori::Resource.should_receive(:find).with(:all, :name => 'nori')
       Nori::Resource.find_all_by_name('nori')
     end
 
-    it 'should call .all with multiple magic conditions' do
-      Nori::Resource.should_receive(:all).with(:name => 'nori', :language => 'ruby')
+    it 'should call .find with :all and multiple magic conditions' do
+      Nori::Resource.should_receive(:find).with(:all, :name => 'nori', :language => 'ruby')
       Nori::Resource.find_all_by_name_and_language('nori', 'ruby')
     end
 
-    it 'should call .all with multiple magic conditions and extra conditions' do
-      Nori::Resource.should_receive(:all).with(:name => 'nori', :language => 'ruby', :order => 'desc')
+    it 'should call .find with :all and multiple magic conditions and extra conditions' do
+      Nori::Resource.should_receive(:find).with(:all, :name => 'nori', :language => 'ruby', :order => 'desc')
       Nori::Resource.find_all_by_name_and_language('nori', 'ruby', :order => 'desc')
     end
   end
