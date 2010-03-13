@@ -8,6 +8,10 @@ module Nori
       return @attributes[method.to_s] if @attributes[method.to_s]
       super
     end
+    
+    def save
+      Request.perform(self.class.url(:create), @attributes, self.class.http_method(:create))
+    end
 
     def self.action(name, attributes)
       @actions ||= {}
@@ -40,7 +44,7 @@ module Nori
     end
 
     def self.http_method(action)
-      super || :get
+      super || (action == :create ? :post : :get)
     end
 
     def self.parameter_action(parameter, action)

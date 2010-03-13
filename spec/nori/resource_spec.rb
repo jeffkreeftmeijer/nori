@@ -23,9 +23,46 @@ describe 'Nori::Resource' do
       }.should raise_error(NoMethodError)
     end
   end
-
+  
+  describe '#save' do
+    it 'should call Nori::Request.perform to the :create url and pass the arguments' do
+      Nori::Resource.instance_variable_set(
+        :@actions,
+        {:create => {:url => 'http://example.com'}}
+      )
+      
+      @resource = Nori::Resource.new(:name => 'Bob')
+      
+      Nori::Request.should_receive(:perform).with(
+        'http://example.com',
+        {:name => 'Bob'},
+        :post
+      )
+      
+      @resource.save
+    end
+    
+    it 'should call Nori::Request.perform with the :get http_method' do
+      Nori::Resource.instance_variable_set(
+        :@actions,
+        {:create => {:url => 'http://example.com', :http_method => :get}}
+      )
+      
+      @resource = Nori::Resource.new(:name => 'Bob')
+      
+      Nori::Request.should_receive(:perform).with(
+        'http://example.com',
+        {:name => 'Bob'},
+        :get
+      )
+       
+      @resource.save
+    end
+  end
+  
   describe '.action' do
     before(:all) do
+      Nori::Resource.instance_variable_set(:@actions, nil)
       Nori::Resource.action :index, :url => 'http://example.com'
       @actions = Nori::Resource.instance_variable_get(:@actions)
     end
@@ -88,7 +125,7 @@ describe 'Nori::Resource' do
         Nori::Resource.find(:id => 123)
       end
 
-      it 'should send the item in the parent_node to #new' do
+      it 'should send the item in the parent_node to .new' do
         Nori::Request.stub!(:perform).and_return({'resource' => 1})
         Nori::Resource.should_receive(:new).with(1)
         Nori::Resource.find(:id => 1)
@@ -176,7 +213,7 @@ describe 'Nori::Resource' do
         Nori::Resource.find(:all, :id => 123)
       end
 
-      it 'should send every item in the parent_node to #new' do
+      it 'should send every item in the parent_node to .new' do
         [1,2,3].each do |item|
           Nori::Resource.should_receive(:new).with(item)
         end
@@ -250,13 +287,26 @@ describe 'Nori::Resource' do
   end
 
   describe '.http_method' do
-    it 'should return :get as the default' do
+    it 'should return :get as the default for :index and :show' do
       @actions = Nori::Resource.instance_variable_set(
         :@actions,
-        {:index => {:http_method => nil}}
+        {
+          :index => {:http_method => nil},
+          :show => {:http_method => nil}
+        }
       )
 
       Nori::Resource.http_method(:index).should == :get
+      Nori::Resource.http_method(:show).should == :get
+    end
+    
+    it 'should return :post as the default for :create' do
+      @actions = Nori::Resource.instance_variable_set(
+        :@actions,
+        {:create => {:http_method => nil}},
+      )
+
+      Nori::Resource.http_method(:create).should == :post
     end
 
     it 'should return the parent_node when specified' do
