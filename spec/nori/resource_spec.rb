@@ -44,192 +44,188 @@ describe 'Nori::Resource' do
   end
 
   describe '.find' do
-    before(:all) do
-      @actions = Nori::Resource.instance_variable_set(
-        :@actions,
-        {:index => {}}
-      )
+    describe 'when not providing the :all argument' do
+      it 'should call Nori::Request.perform to the :show url' do
+        Nori::Resource.instance_variable_set(
+          :@actions,
+          {:show => {:url => 'http://example.com'}}
+        )
+
+        Nori::Request.should_receive(:perform).with(
+          'http://example.com',
+          {},
+          :get
+        ).and_return('resource' => {})
+        Nori::Resource.find
+      end
+
+      it 'should call Nori::Request.perform to the :show url and the arguments' do
+        Nori::Resource.instance_variable_set(
+          :@actions,
+          {:show => {:url => 'http://example.com'}}
+        )
+
+        Nori::Request.should_receive(:perform).with(
+          'http://example.com',
+          {:id => 123},
+          :get
+        ).and_return('resource' => {})
+        Nori::Resource.find(:id => 123)
+      end
+
+
+      it 'should call Nori::Request.perform with the :post http_method' do
+        Nori::Resource.instance_variable_set(
+          :@actions,
+          {:show => {:url => 'http://example.com', :http_method => :post}}
+        )
+
+        Nori::Request.should_receive(:perform).with(
+          'http://example.com',
+          {:id => 123},
+          :post
+        ).and_return('resource' => {})
+        Nori::Resource.find(:id => 123)
+      end
+
+      it 'should send the item in the parent_node to #new' do
+        Nori::Request.stub!(:perform).and_return({'resource' => 1})
+        Nori::Resource.should_receive(:new).with(1)
+        Nori::Resource.find(:id => 1)
+      end
+
+      it 'should return a Resource object' do
+        Nori::Request.stub!(:perform).and_return({'resource' => 1})
+        object = Nori::Resource.find(:id => 1)
+        object.should be_instance_of Nori::Resource
+      end
+
+      it 'should use the :parent_node when provided' do
+        Nori::Request.stub!(:perform).and_return({'node' => 1})
+
+        @actions = Nori::Resource.instance_variable_set(
+          :@actions,
+          {:show => {:url => 'http://example.com', :parent_node => 'node'}}
+        )
+
+        Nori::Resource.should_receive(:new).with(1)
+        Nori::Resource.find(:id => 1)
+      end
+
+      it 'should raise an error when the :parent_node could not be found' do
+        response = {'othernode' => 1}
+        Nori::Request.stub!(:perform).and_return(response)
+        lambda {
+          Nori::Resource.find(:id => 1)
+        }.should raise_error(Nori::ParentNodeNotFound, "Couldn't find `node` in #{response.to_yaml}")
+      end
+
+      it 'should raise an error if there is no :show action' do
+        Nori::Resource.instance_variable_set(:@actions, {})
+        lambda {
+          Nori::Resource.find(:id => 1)
+        }.should raise_error(Nori::ActionNotSpecified)
+      end
     end
 
-    it 'should call .find_with_id and pass its arguments' do
-      Nori::Resource.should_receive(:find_with_id).with(1, :q => 'Chunky Bacon!')
-      Nori::Resource.find(1, :q => 'Chunky Bacon!')
-    end
+    describe 'when providing the :all argument' do
+      before(:each) do
+        Nori::Request.stub!(:perform).and_return({'resource' => [1,2,3]})
+      end
 
-    it 'should call .all and pass its arguments' do
-      Nori::Resource.should_receive(:all).with(:q => 'Chunky Bacon!')
-      Nori::Resource.find(:all, :q => 'Chunky Bacon!')
-    end
-  end
+      it 'should call Nori::Request.perform to the :index url' do
+        Nori::Resource.instance_variable_set(
+          :@actions,
+          {:index => {:url => 'http://example.com'}}
+        )
 
-  describe '.find_with_id' do
-    before(:each) do
-      Nori::Request.stub!(:perform).and_return({'resource' => 1})
-    end
+        Nori::Request.should_receive(:perform).with(
+          'http://example.com',
+          {},
+          :get
+        ).and_return('resource' => {})
+        Nori::Resource.find(:all)
+      end
 
-    it 'should call Nori::Request.perform to the :show url' do
-      @actions = Nori::Resource.instance_variable_set(
-        :@actions,
-        {:show => {:url => 'http://google.com/search'}}
-      )
+      it 'should call Nori::Request.perform to the :show url and the arguments' do
+        Nori::Resource.instance_variable_set(
+          :@actions,
+          {:index => {:url => 'http://example.com'}}
+        )
 
-      Nori::Request.should_receive(:perform).with(
-        'http://google.com/search',
-        {:id => 1},
-        :get
-      ).and_return('resource' => {})
+        Nori::Request.should_receive(:perform).with(
+          'http://example.com',
+          {:id => 123},
+          :get
+        ).and_return('resource' => {})
+        Nori::Resource.find(:all, :id => 123)
+      end
 
-      Nori::Resource.find_with_id(1)
-    end
 
-    it 'should call Nori::Request.perform to the :show url and the arguments' do
-      Nori::Request.should_receive(:perform).with(
-        'http://google.com/search',
-        {:id => 1, :q => 'Chunky Bacon!'},
-        :get
-      ).and_return('resource' => {})
+      it 'should call Nori::Request.perform with the :post http_method' do
+        Nori::Resource.instance_variable_set(
+          :@actions,
+          {:index => {:url => 'http://example.com', :http_method => :post}}
+        )
 
-      Nori::Resource.find_with_id(1, :q => 'Chunky Bacon!')
-    end
+        Nori::Request.should_receive(:perform).with(
+          'http://example.com',
+          {:id => 123},
+          :post
+        ).and_return('resource' => {})
+        Nori::Resource.find(:all, :id => 123)
+      end
 
-    it 'should call Nori::Request.perform with the :post http_method' do
-      @actions = Nori::Resource.instance_variable_set(
-        :@actions,
-        {:show => {:url => 'http://google.com/search', :http_method => :post}}
-      )
+      it 'should send every item in the parent_node to #new' do
+        [1,2,3].each do |item|
+          Nori::Resource.should_receive(:new).with(item)
+        end
+        Nori::Resource.find(:all)
+      end
 
-      Nori::Request.should_receive(:perform).with(
-        'http://google.com/search',
-        {:id => 1},
-        :post
-      ).and_return('resource' => {})
-      Nori::Resource.find_with_id(1)
-    end
+      it 'should return three Resource objects' do
+        objects = Nori::Resource.find(:all)
+        objects.each do |object|
+          object.should be_instance_of Nori::Resource
+        end
+      end
 
-    it 'should send the item in the parent_node to #new' do
-      Nori::Resource.should_receive(:new).with(1)
-      Nori::Resource.find_with_id(1)
-    end
+      it 'should use the :parent_node when provided' do
+        Nori::Request.stub!(:perform).and_return({'node' => [1,2,3]})
 
-    it 'should return a Resource object' do
-      object = Nori::Resource.find(1)
-      object.should be_instance_of Nori::Resource
-    end
+        @actions = Nori::Resource.instance_variable_set(
+          :@actions,
+          {:index => {:url => 'http://example.com', :parent_node => 'node'}}
+        )
 
-    it 'should use the :parent_node when provided' do
-      Nori::Request.stub!(:perform).and_return({'node' => 1})
+        [1,2,3].each do |item|
+          Nori::Resource.should_receive(:new).with(item)
+        end
 
-      @actions = Nori::Resource.instance_variable_set(
-        :@actions,
-        {:show => {:url => 'http://google.com/search', :parent_node => 'node'}}
-      )
+        Nori::Resource.find(:all)
+      end
 
-      Nori::Resource.should_receive(:new).with(1)
-      Nori::Resource.find_with_id(1)
-    end
+      it 'should raise an error when the :parent_node could not be found' do
+        response = {'othernode' => 1}
+        Nori::Request.stub!(:perform).and_return(response)
+        lambda {
+          Nori::Resource.find(:all)
+        }.should raise_error(Nori::ParentNodeNotFound, "Couldn't find `node` in #{response.to_yaml}")
+      end
 
-    it 'should raise an error when the :parent_node could not be found' do
-      response = {'othernode' => 1}
-      Nori::Request.stub!(:perform).and_return(response)
-      lambda {
-        Nori::Resource.find_with_id(1)
-      }.should raise_error(Nori::ParentNodeNotFound, "Couldn't find `node` in #{response.to_yaml}")
-    end
-
-    it 'should raise an error if there is no :show action' do
-      Nori::Resource.instance_variable_set(:@actions, {})
-      lambda {
-        Nori::Resource.find_with_id(1)
-      }.should raise_error(Nori::ActionNotSpecified)
+      it 'should raise an error if there is no :index action' do
+        Nori::Resource.instance_variable_set(:@actions, {})
+        lambda {
+          Nori::Resource.find(:all)
+        }.should raise_error(Nori::ActionNotSpecified)
+      end
     end
   end
 
   describe '.all' do
-    before(:each) do
-      Nori::Request.stub!(:perform).and_return({'resource' => [1,2,3]})
-    end
-
-    it 'should call Nori::Request.perform to the :index url' do
-      @actions = Nori::Resource.instance_variable_set(
-        :@actions,
-        {:index => {:url => 'http://google.com/search'}}
-      )
-
-      Nori::Request.should_receive(:perform).with(
-        'http://google.com/search',
-        {},
-        :get
-      ).and_return('resource' => {})
-
-      Nori::Resource.all
-    end
-
-    it 'should call Nori::Request.perform to the :index url and the arguments' do
-      Nori::Request.should_receive(:perform).with(
-        'http://google.com/search',
-        {:q => 'Chunky Bacon!'},
-        :get
-      ).and_return('resource' => {})
-
-      Nori::Resource.all(:q => 'Chunky Bacon!')
-    end
-
-    it 'should call Nori::Request.perform with the :post http_method' do
-      @actions = Nori::Resource.instance_variable_set(
-        :@actions,
-        {:index => {:url => 'http://google.com/search', :http_method => :post}}
-      )
-
-      Nori::Request.should_receive(:perform).with(
-        'http://google.com/search',
-        {},
-        :post
-      ).and_return('resource' => {})
-      Nori::Resource.all
-    end
-
-    it 'should send every item in the parent_node to #new' do
-      [1,2,3].each do |item|
-        Nori::Resource.should_receive(:new).with(item)
-      end
-      Nori::Resource.all
-    end
-
-    it 'should return three Resource objects' do
-      objects = Nori::Resource.all
-      objects.each do |object|
-        object.should be_instance_of Nori::Resource
-      end
-    end
-
-    it 'should use the :parent_node when provided' do
-      Nori::Request.stub!(:perform).and_return({'node' => [1,2,3]})
-
-      @actions = Nori::Resource.instance_variable_set(
-        :@actions,
-        {:index => {:url => 'http://google.com/search', :parent_node => 'node'}}
-      )
-
-      [1,2,3].each do |item|
-        Nori::Resource.should_receive(:new).with(item)
-      end
-
-      Nori::Resource.all
-    end
-
-    it 'should raise an error when the :parent_node could not be found' do
-      response = {'othernode' => 1}
-      Nori::Request.stub!(:perform).and_return(response)
-      lambda {
-        Nori::Resource.all
-      }.should raise_error(Nori::ParentNodeNotFound, "Couldn't find `node` in #{response.to_yaml}")
-    end
-
-    it 'should raise an error if there is no :index action' do
-      Nori::Resource.instance_variable_set(:@actions, {})
-      lambda {
-        Nori::Resource.all
-      }.should raise_error(Nori::ActionNotSpecified)
+    it 'should call find with :all and pass its arguments' do
+      Nori::Resource.should_receive(:find).with(:all, :name => 'Bob')
+      Nori::Resource.all(:name => 'Bob')
     end
   end
 
